@@ -60,7 +60,7 @@ def ui = builder.panel {
 
 // Show in JFrame
 def frame = new JFrame("Groovy Swing DSL Demo")
-frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+//frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
 frame.contentPane.add(ui)
 frame.pack()
 frame.visible = true
