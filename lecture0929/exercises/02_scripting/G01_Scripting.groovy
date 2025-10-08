@@ -13,3 +13,4 @@ a + b + 9
 
 println 'Result: ' + shell.evaluate(code)
 //TASK Read and print the 'debugNote' bound by the script
+println 'Debug notes from scripting ' + binding.getVariable('debugNote')

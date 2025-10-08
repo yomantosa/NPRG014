@@ -6,6 +6,15 @@ class City {
     static def create(String n, int v, boolean e = false) {
         return new City(name: n, size: v, capital: e)
     }
+    
+    @Override
+    String toString() {
+        if(capital){
+        return "Capital city of ${name}, population: ${size}"
+        } else {
+            return "City of ${name}, population: ${size}"
+        }
+    }
 }
 
 println City.create("Brno", 400000)
@@ -21,5 +30,5 @@ println pisek
 
 println tabor
 //TASK Provide a customized toString() method overriding Object::toString() that prints the name and the population
-//assert 'City of Písek, population: 25001' == pisek.toString()
-//assert 'Capital city of Praha, population: 1300000' == praha.toString()
+assert 'City of Písek, population: 25001' == pisek.toString()
+assert 'Capital city of Praha, population: 1300000' == praha.toString()

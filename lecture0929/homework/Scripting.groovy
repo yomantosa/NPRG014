@@ -17,7 +17,26 @@
 
 List<String> processNumbers(List<Operation> userInput, List<Integer> numbers) {
     //Function that runs the provided operations on the provided collection of numbers. Needs to be implemented.
-    // ...
+    def binding = new Binding(LENGTH: numbers.size())
+    def shell = new GroovyShell(binding)
+    def result = numbers
+
+    userInput.each { op ->
+        def closure = shell.evaluate("(${op.command})")
+
+        closure.delegate = binding
+        closure.resolveStrategy = Closure.DELEGATE_FIRST
+
+        switch (op.type) {
+            case OperationType.FILTER:
+                result = result.findAll(closure)
+                break
+            case OperationType.TRANSFORMATION:
+                result = result.collect(closure)
+                break
+        }
+    }
+    return result
 }
 
 
