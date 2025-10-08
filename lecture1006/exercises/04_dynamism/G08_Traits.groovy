@@ -15,17 +15,17 @@ duck.quack()
 
 
 //TASK uncomment, see and explain
-//trait Aging {
-//    int age = 0
-//    void birthday() {age+=1}
-//}
+trait Aging {
+   int age = 0
+   void birthday() {age+=1}
+}
 
-//duck = duck as Aging
-//10.times {
-//    duck.birthday()
-//}
+duck = duck as Aging
+10.times {
+   duck.birthday()
+}
 
-//println "Duck's age: ${duck.age}"
-//duck.quack()
+println "Duck's age: ${duck.age}"
+duck.quack()
 
  

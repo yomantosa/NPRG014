@@ -8,6 +8,7 @@ final doc = builder.race() {
         car(number: index) {
             driver(name: name)
         }
+        cow{}
     }
 }
 
