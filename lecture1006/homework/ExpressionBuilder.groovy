@@ -6,13 +6,107 @@
 // This means that parentheses must be placed where necessary with respect to the mathematical operator priorities.
 // Change or add to the code in the script. Reuse the infrastructure code at the bottom of the script.
 class NumericExpressionBuilder extends BuilderSupport {
+    Item root
 
+    @Override
+    protected void setParent(Object parent, Object child) {
+        parent.children << child
+    }
+
+    @Override
+    protected Object createNode(Object name) {
+        return new Item(name.toString())
+    }
+
+    @Override
+    protected Object createNode(Object name, Object val) {
+        return new Item(name.toString(), val)
+    }
+
+    @Override
+    protected Object createNode(Object name, Map attributes) {
+        def item = new Item(name.toString())
+        if (attributes.containsKey('value')) {
+            item.value = attributes.value
+        }
+        return item
+    }
+
+    @Override
+    protected Object createNode(Object name, Map attributes, Object value) {
+        def item = new Item(name.toString())
+        item.value = attributes?.value ?: value
+        return item
+    }
+
+    @Override
+    protected void nodeCompleted(Object parent, Object node) {
+        if (parent == null) {
+            root = node
+        }
+    }
+
+    Item rootItem() {
+        return root
+    }
 }
 
 class Item {
+    String op
+    def value
+    List<Item> children = []
+
+    Item(String op) {
+        this.op = op
+    }
+
+    Item(String op, def value) {
+        this.op = op
+        this.value = value
+    }
+
+    private static final Map<String, Integer> PRIORITY = [
+        'number': 4,
+        'variable': 4,
+        'power': 3,
+        '^': 3,
+        '*': 2,
+        '/': 2,
+        '+': 1,
+        '-': 1
+    ]
+
+    private int priority() {
+        PRIORITY.get(op, 0)
+    }
+
     @Override
-    public String toString() {
-        super.toString()
+    String toString() {
+        if (op == 'number') return value.toString()
+        if (op == 'variable') return value.toString()
+
+        if (children.size() == 1) {
+            return "${op}${children[0]}"
+        }
+
+        if (children.size() == 2) {
+            def left = children[0]
+            def right = children[1]
+            def leftStr = left.toString()
+            def rightStr = right.toString()
+
+            if (left.priority() < this.priority()) {
+                leftStr = "(${leftStr})"
+            }
+
+            if (right.priority() < this.priority()) {
+                rightStr = "(${rightStr})"
+            }
+
+            def symbol = (op == 'power') ? '^' : op
+            return "${leftStr} ${symbol} ${rightStr}"
+        }
+        return op
     }
 }
 //------------------------- Do not modify beyond this point!
