@@ -16,35 +16,33 @@ import static org.codehaus.groovy.control.CompilePhase.SEMANTIC_ANALYSIS
 
 @Retention(RetentionPolicy.SOURCE)
 @Target([ElementType.TYPE])
-@GroovyASTTransformationClass("NumberConversionTransformation1")
-public @interface NumberConversion1 {}
+@GroovyASTTransformationClass("NumberConversionTransformation2")
+public @interface NumberConversion2 {}
 
 
 @GroovyASTTransformation(phase = SEMANTIC_ANALYSIS)
-public class NumberConversionTransformation1 implements ASTTransformation {
+public class NumberConversionTransformation2 implements ASTTransformation {
 
     public void visit(ASTNode[] astNodes, SourceUnit source) {
         ClassNode annotatedClass = astNodes[1]
 
         AstBuilder ab = new AstBuilder()
-        List<ASTNode> res = ab.buildFromString('''
-                Integer.parseInt("$valueToConvert")
-            ''')
+        List<ASTNode> res = ab.buildFromCode {
+            Integer.parseInt(valueToConvert)
+        }
 
         def param = new Parameter(ClassHelper.STRING_TYPE, "valueToConvert")
         annotatedClass.addMethod("convertToNumber", Opcodes.ACC_PUBLIC, ClassHelper.Integer_TYPE, [param] as Parameter[], [] as ClassNode[], res[0])
         
-
         /* the add(a, b) method */
-        List<ASTNode> exprstmt = ab.buildFromString('''
-              //empty
-            ''')
+        List<ASTNode> exprstmt = ab.buildFromCode {
+        }
         annotatedClass.addMethod("add", Opcodes.ACC_PUBLIC, ClassHelper.Integer_TYPE, [] as Parameter[], [] as ClassNode[], exprstmt[0])
     }
 }
 
 final calculator = new GroovyShell(this.class.getClassLoader()).evaluate('''
-@NumberConversion1
+@NumberConversion2
 class Calculator {}
 
 new Calculator()
