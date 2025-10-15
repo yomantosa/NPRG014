@@ -22,6 +22,9 @@ import groovyjarjarasm.asm.Opcodes
 import org.codehaus.groovy.ast.ClassHelper
 import static org.codehaus.groovy.ast.tools.GeneralUtils.*
 
+import org.codehaus.groovy.ast.AnnotationNode
+
+
 @Retention(RetentionPolicy.SOURCE)
 @Target([ElementType.TYPE])
 @GroovyASTTransformationClass("CreatedAtTransformation")
@@ -59,7 +62,68 @@ public class CreatedAtTransformation implements ASTTransformation {
         // ClassNode.addMethod() accepts a BlockStatement
         
         //TODO Implement this method
+        if (!astNodes || astNodes.length < 2) return
+        def ann = (AnnotationNode) astNodes[0]
+        def cls = (ClassNode) astNodes[1]
         
+        if (!(ann instanceof AnnotationNode) || !(cls instanceof ClassNode)) return
+
+        def nameExpr = ann.getMember('name')
+        String getterName = (nameExpr instanceof ConstantExpression && nameExpr.value) ?
+                nameExpr.value.toString() : "createdAt"
+
+        if (!cls.getField("_createdAt")) {
+            BlockStatement initBlock = (BlockStatement) new AstBuilder().buildFromString(
+                    SEMANTIC_ANALYSIS, false, "System.currentTimeMillis()"
+            )[0]
+            def initExpr = initBlock.statements[0].expression
+            cls.addField("_createdAt", Opcodes.ACC_PRIVATE, ClassHelper.long_TYPE, initExpr)
+        }
+
+        BlockStatement getterBody = (BlockStatement) new AstBuilder().buildFromString(
+                SEMANTIC_ANALYSIS, false, "{ return _createdAt }"
+        )[0]
+        cls.addMethod(
+                getterName,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                ClassHelper.long_TYPE,
+                Parameter.EMPTY_ARRAY,
+                ClassNode.EMPTY_ARRAY,
+                getterBody
+        )
+
+        BlockStatement clearBody = (BlockStatement) new AstBuilder().buildFromString(
+                SEMANTIC_ANALYSIS, false, "{ _createdAt = 0L }"
+        )[0]
+        cls.addMethod(
+                "clearTimestamp",
+                Opcodes.ACC_PUBLIC,
+                ClassHelper.VOID_TYPE,
+                Parameter.EMPTY_ARRAY,
+                ClassNode.EMPTY_ARRAY,
+                clearBody
+        )
+
+        for (MethodNode m : new ArrayList<MethodNode>(cls.methods)) {
+            if (m.name in [getterName, "clearTimestamp", "<init>"]) continue
+            if (m.isAbstract()) continue
+
+            if (!(m.code instanceof BlockStatement)) {
+                def wrapping = new BlockStatement()
+                if (m.code != null) wrapping.addStatement(m.code)
+                m.code = wrapping
+            }
+
+            BlockStatement injBlock = (BlockStatement) new AstBuilder().buildFromString(
+                    SEMANTIC_ANALYSIS, false,
+                    """{
+                        if (System.currentTimeMillis() - this._createdAt > 1000L) {
+                            this._createdAt = System.currentTimeMillis()
+                        }
+                    }"""
+            )[0]
+            ((BlockStatement) m.code).statements.add(0, injBlock.statements[0])
+        }
     }
 }
 
