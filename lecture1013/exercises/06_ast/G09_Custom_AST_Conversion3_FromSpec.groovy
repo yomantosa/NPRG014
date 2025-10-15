@@ -52,11 +52,16 @@ public class NumberConversionTransformation3 implements ASTTransformation {
         List<ASTNode> exprStmt = ab.buildFromSpec {
             method('add', Opcodes.ACC_PUBLIC, Integer) {
                 parameters {
-                    parameter 'a': Integer.class
-                    parameter 'b': Integer.class                    
                 }
                 exceptions { }
                 block {
+                    returnStatement {
+                        binary {
+                            variable 'a'
+                            token('+')
+                            variable 'b'
+                        }
+                    }                
                 }
                 annotations {}
             }
