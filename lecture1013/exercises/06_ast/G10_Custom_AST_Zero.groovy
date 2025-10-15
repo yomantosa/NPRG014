@@ -15,6 +15,11 @@ import org.codehaus.groovy.transform.GroovyASTTransformationClass
 import groovyjarjarasm.asm.Opcodes
 import static org.codehaus.groovy.control.CompilePhase.SEMANTIC_ANALYSIS
 
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.FieldNode
+
+
+
 @Retention(RetentionPolicy.SOURCE)
 @Target([ElementType.TYPE])
 @GroovyASTTransformationClass("ZeroTransformation")
@@ -30,7 +35,27 @@ public @interface Zero {}
 public class ZeroTransformation implements ASTTransformation {
 
     public void visit(ASTNode[] astNodes, SourceUnit source) {
+        if (!astNodes) return
+        def annotationNode = astNodes[0]
+        def annotatedNode = astNodes[1]
 
+        if (!(annotatedNode instanceof ClassNode)) return
+
+        ClassNode classNode = (ClassNode) annotatedNode
+
+        // Add a public int field named 'zero' initialized to 0
+        def zeroField = new FieldNode(
+            "zero",                             // name
+            Opcodes.ACC_PUBLIC,                 // modifiers
+            ClassHelper.int_TYPE,               // type
+            classNode,                          // owner
+            new ConstantExpression(0)           // initial value
+        )
+
+        // Only add if not already defined
+        if (!classNode.hasProperty("zero")) {
+            classNode.addField(zeroField)
+        }
     }
 }
 

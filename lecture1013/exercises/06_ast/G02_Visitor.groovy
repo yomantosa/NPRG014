@@ -49,6 +49,20 @@ class PrintingVisitor extends Visitor<Void> {
 expr.acceptVisitor(new PrintingVisitor())
 
 //TASK add a visitor that will compute the value of the expression
-
-//println ""
-//println expr.acceptVisitor(new ComputingVisitor())
+class ComputingVisitor extends Visitor<Integer> {
+    Integer visit(IntegerConstant expr) {
+        return expr.value
+    }
+    Integer visit(PlusExpr expr) {
+        def leftVal = expr.left.acceptVisitor(this)
+        def rightVal = expr.right.acceptVisitor(this)
+        return leftVal + rightVal
+    }
+    Integer visit(MultExpr expr) {
+        def leftVal = expr.left.acceptVisitor(this)
+        def rightVal = expr.right.acceptVisitor(this)
+        return leftVal * rightVal
+    }
+}
+println ""
+println expr.acceptVisitor(new ComputingVisitor())

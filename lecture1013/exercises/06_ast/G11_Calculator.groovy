@@ -2,6 +2,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
+
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.MethodNode
 import org.codehaus.groovy.control.SourceUnit
@@ -13,6 +14,15 @@ import org.codehaus.groovy.ast.builder.AstBuilder
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.syntax.SyntaxException
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage
+
+import org.codehaus.groovy.ast.AnnotationNode
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression
+import org.codehaus.groovy.ast.expr.ArgumentListExpression
+import org.codehaus.groovy.ast.stmt.ThrowStatement
+import org.codehaus.groovy.ast.ClassHelper
+
+
 
 
 @Retention(RetentionPolicy.SOURCE)
@@ -37,6 +47,52 @@ public class UnsupportedTransformation implements ASTTransformation {
         // http://docs.groovy-lang.org/docs/groovy-latest/html/api/org/codehaus/groovy/ast/stmt/package-summary.html
         // http://docs.groovy-lang.org/docs/groovy-latest/html/api/org/codehaus/groovy/ast/tools/package-summary.html        
         // http://docs.groovy-lang.org/docs/groovy-latest/html/api/org/codehaus/groovy/ast/tools/GeneralUtils.html        
+
+        if (!astNodes || astNodes.length < 2) return
+
+        ASTNode annotationNode = astNodes[0]
+        ASTNode methodNode = astNodes[1]
+        if (!(methodNode instanceof MethodNode)) return
+        MethodNode method = (MethodNode) methodNode
+
+        // --- Check for non-empty body ---
+        if (method.code instanceof BlockStatement && !((BlockStatement) method.code).statements.isEmpty()) {
+            addError("Method '${method.name}' annotated with @Unsupported must not have a body", method, source)
+            return
+        }
+
+        // --- Replace body with 'throw new UnsupportedOperationException("The <name> operation is not supported")' ---
+        def msgExpr = new ConstantExpression("The ${method.name} operation is not supported".toString())
+        def newException = new ConstructorCallExpression(
+                ClassHelper.make(UnsupportedOperationException),
+                new ArgumentListExpression(msgExpr)
+        )
+        def throwStmt = new ThrowStatement(newException)
+
+        def newBody = new BlockStatement()
+        newBody.addStatement(throwStmt)
+        method.setCode(newBody)
+    }
+
+    def createStatements(String clause) {
+        def statements = """
+            if(!($clause)) {
+                throw new Exception('Precondition violated: {$clause}')
+            }
+        """
+
+        AstBuilder ab = new AstBuilder()
+        List<ASTNode> res = ab.buildFromString(CompilePhase.SEMANTIC_ANALYSIS, statements)
+        BlockStatement bs = res[0]
+        return bs
+    }
+
+    public void addError(String msg, ASTNode expr, SourceUnit source) {
+        int line = expr.lineNumber
+        int col = expr.columnNumber
+        SyntaxException se = new SyntaxException(msg + '\n', line, col)
+        SyntaxErrorMessage sem = new SyntaxErrorMessage(se, source)
+        source.errorCollector.addErrorAndContinue(sem)
     }
 }
 

@@ -11,14 +11,29 @@ abstract class BinaryExpression extends Expression {
 
 class IntegerConstant extends Expression {
     int value
+
+    @Override
+    public void acceptVisitor(Visitor v){
+        v.visit(this)
+    }
 }
 
 class PlusExpr extends BinaryExpression {
     String getOperator() {"+"}
+
+    @Override
+    public void acceptVisitor(Visitor v){
+        v.visit(this)
+    }
 }
 
 class MultExpr extends BinaryExpression {
     String getOperator() {"*"}
+
+    @Override
+    public void acceptVisitor(Visitor v){
+        v.visit(this)
+    }
 }
 
 def expr = new PlusExpr(left: new IntegerConstant(value: 10),
