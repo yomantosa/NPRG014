@@ -114,7 +114,6 @@ Supplementary materials for the course of "Concepts of Modern Programming Langua
 * Introduction to prototype-based languages (IO)
 
 ### Preparation
-* Same as for Lesson 4
 * Download IO interpreter from http://iolanguage.org/binaries.html
 * Checkout this repository to get all examples
 
