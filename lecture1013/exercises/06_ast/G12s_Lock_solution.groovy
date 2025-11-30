@@ -33,7 +33,7 @@ public class LockingTransformation implements ASTTransformation {
         clazz.addField('myLock', Opcodes.ACC_PRIVATE, ClassHelper.make(java.util.concurrent.locks.ReentrantLock), initializer[0].statements[0].expression)
         final methods = clazz.getMethods()
         methods.each {method ->
-            final newCode = new AstBuilder().buildFromString('myLock.lock();try {println 10} finally {myLock.unlock()}')[0]
+            final newCode = new AstBuilder().buildFromString('myLock.lock();try {} finally {myLock.unlock()}')[0]
             final lockingStatement = newCode.statements[0]
             final tryBlock = newCode.statements[1]
 
