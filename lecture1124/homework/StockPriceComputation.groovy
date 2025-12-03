@@ -70,21 +70,40 @@ group.with {
     //================================= do not modify above this point
     
     //implement the three operators and utility intermediate channels here
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    final chicagoEURPrices = new DataflowQueue()
+    final avgForMoving = new DataflowQueue()
+    operator(
+        inputs: [chicagoUSDPrices, usd2eurRates],
+        outputs: [chicagoEURPrices]
+    ) {
+        usdPrice, rate -> bindOutput(usdPrice * rate)
+    }
+    operator(
+        inputs: [parisEURPrices, viennaEURPrices, frankfurtEURPrices, chicagoEURPrices],
+        outputs: [avgPrices, avgForMoving],
+        stateObject: [lastParis: 0]
+    ) {
+        paris, vienna, frankfurt, chicagoEur -> if (paris != 0) {
+            stateObject.lastParis = paris
+        } else {
+            paris = stateObject.lastParis
+        }
+        def dailyAvg = (paris + vienna + frankfurt + chicagoEur) / 4.0
+        bindAllOutputs(dailyAvg)
+    }
+    operator(
+            inputs: [avgForMoving],
+            outputs: [fiveDayAverages],
+            stateObject: [history: []]
+    ) { dailyAvg ->
+        def history = stateObject.history as List
+        history << dailyAvg
+        if (history.size() > 5) {
+            history.remove(0)
+        }
+        def movingAvg = history.sum() / history.size()
+        bindOutput(movingAvg)
+    }
 
     //================================= do not modify beyond this point    
 
